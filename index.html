@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผนที่ร้านเสื้อผ้ามือสองรอบมหาวิทยาลัยศิลปากร</title>
+
+  <style>
+    body {
+      font-family: 'Sarabun', sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+    }
+
+    .shop-open {
+      border: 2px solid #22c55e;
+      background: #f0fdf4;
+    }
+
+    .sidebar {
+      width: 320px;
+      background: #f5f5f5;
+      /* เทาอ่อน */
+      padding: 15px;
+      overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar h2 {
+      margin-top: 0;
+    }
+
+    .shop-card {
+      background: #ffffff;
+      /* ขาว */
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      /* เงานิดๆ */
+    }
+
+    .shop-card:hover {
+      background: #fafafa;
+      transform: translateY(-2px);
+      transition: 0.2s;
+    }
+    
+    /* ===== TOGGLE BUTTON ===== */
+    #toggleSidebar {
+      position: fixed;
+      top: 50%;
+      /* ตรงกลางแนวตั้ง */
+      left: 337px;
+      /* ตอน sidebar เปิด */
+      transform: translateY(-50%);
+      z-index: 10001;
+      background: #111;
+      color: white;
+      border: none;
+      padding: 15px 8px;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      transition: left 0.3s ease;
+      font-size: 18px;
+    }
+
+    /* ===== ซ่อน sidebar ===== */
+    .sidebar {
+      width: 320px;
+      background: #f5f5f5;
+      padding: 15px;
+      overflow-y: auto;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, width 0.3s ease;
+      /* animation ลื่น */
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+      width: 0;
+      /* ทำให้ย่อจนหายไป */
+      padding: 0;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: 40%;
+        overflow-y: scroll;
+      }
+
+      #map {
+        height: 60%;
+      }
+    }
+
+    #map {
+      flex: 1;
+    }
+
+    .controls input,
+    .controls select {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 6px;
+    }
+.controls button:last-child {
+  margin-bottom: 15px; /* เพิ่มระยะห่างด้านล่างปุ่มสอบถาม */
+}
+    .controls input#search,
+    .controls select {
+      box-sizing: border-box;
+      /* รวม padding + border ใน width */
+      height: 36px;
+      /* กำหนดสูงเท่ากัน */
+    }
+  </style>
+</head>
+
+<body>
+  <button id="toggleSidebar" onclick="toggleSidebar()">></button>
+  
+  <div class="sidebar">
+    
+    <h2 id="title">ร้านทั้งหมด</h2>
+
+    <div class="controls">
+      <select id="language" onchange="changeLanguage()">
+        <option value="th">ไทย</option>
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+      </select>
+
+      <input type="text" id="search" placeholder="ค้นหาร้าน..." onkeyup="applyFilters()">
+
+      <select id="category" onchange="applyFilters()">
+        <option value="all">ทุกหมวด</option>
+        <option value="Vintage">Vintage</option>
+        <option value="Streetwear">Streetwear</option>
+        <option value="ญี่ปุ่น">ญี่ปุ่น</option>
+      </select>
+
+      <select id="price" onchange="applyFilters()">
+        <option value="all">ทุกช่วงราคา</option>
+        <option value="low">💸 ไม่แพง</option>
+        <option value="mid">💰 กลาง</option>
+        <option value="high">💎 หลากหลาย</option>
+      </select>
+      <button id="btnResetMap" onclick="resetMap()" style="width:100%; padding:6px;">🔄 รีเซ็ตแผนที่</button>
+<button id="btnLocateUser" onclick="locateUser()" style="width:100%; padding:6px; margin-top:5px;">📍 ตำแหน่งของฉัน</button>
+<button id="btnSurvey" onclick="window.open('https://forms.gle/tyC2Jc1Na3iUEhqs6', '_blank')" style="width:100%; padding:6px; margin-top:5px;">📝 กรอกแบบสอบถาม</button>
+    </div>
+
+    <div id="shopList"></div>
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+    // ===== DATA =====
+
+    let foodShopsData = [];
+
+    // ===== GLOBAL =====
+    let userPosition = null;
+    let map, markers = [];
+    let userMarker = null;
+    let directionsService, directionsRenderer;
+    let activeInfoWindow = null;
+    let currentLang = "th";
+    let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+    // ===== TRANSLATIONS =====
+    const buttonTranslations = {
+  resetMap: { th: "🔄 รีเซ็ตแผนที่", zh: "🔄 重置地图", en: "🔄 Reset Map" },
+  locateUser: { th: "📍 ตำแหน่งของฉัน", zh: "📍 我的位置", en: "📍 My Location" },
+  survey: { th: "📝 กรอกแบบสอบถาม", zh: "📝 填写问卷", en: "📝 Fill Survey" }
+};
+    const shopsWithHoursMultiLang = [
+      {
+        id: 0,
+        name: { th: "Perch Club Thrift Store", zh: "Perch 俱乐部二手店", en: "Perch Club Thrift Store" },
+        hours: {
+          "Monday": "15:00-20:00",
+          "Tuesday": "15:00-20:00",
+          "Wednesday": "closed",
+          "Thursday": "15:00-20:00",
+          "Friday": "15:00-20:00",
+          "Saturday": "15:00-20:00",
+          "Sunday": "15:00-20:00"
+        }
+      },
+      {
+        id: 1,
+        name: { th: "ฉยล Vintage", zh: "Chayan Vintage 店", en: "Chayan Vintage" },
+        hours: {
+          "Monday": "09:00-22:00",
+          "Tuesday": "09:00-22:00",
+          "Wednesday": "09:00-22:00",
+          "Thursday": "09:00-22:00",
+          "Friday": "09:00-22:00",
+          "Saturday": "09:00-22:00",
+          "Sunday": "09:00-22:00"
+        }
+      },
+      {
+        id: 2,
+        name: { th: "Silpakorn Thrift Market", zh: "Silpakorn 二手市场", en: "Silpakorn Thrift Market" },
+        hours: {
+          "Monday": "closed",
+          "Tuesday": "closed",
+          "Wednesday": "09:00-14:00",
+          "Thursday": "closed",
+          "Friday": "closed",
+          "Saturday": "closed",
+          "Sunday": "closed"
+        }
+      },
+      {
+        id: 3,
+        name: { th: "โกดังวินเทจ สาขา1", zh: "复古仓库 分店1", en: "Vintage Warehouse Branch 1" },
+        hours: {
+          "Monday": "closed",
+          "Tuesday": "16:00-00:00",
+          "Wednesday": "16:00-00:00",
+          "Thursday": "16:00-00:00",
+          "Friday": "16:00-00:00",
+          "Saturday": "16:00-00:00",
+          "Sunday": "16:00-00:00"
+        }
+      },
+      {
+        id: 4,
+        name: { th: "ร้านเสื้อยืดมือสอง ถนนคนเดิน", zh: "步行街二手T恤店", en: "Second-hand T-Shirt Street Shop" },
+        hours: {
+          "Monday": "09:00-22:00",
+          "Tuesday": "09:00-22:00",
+          "Wednesday": "09:00-22:00",
+          "Thursday": "09:00-22:00",
+          "Friday": "09:00-22:00",
+          "Saturday": "09:00-22:00",
+          "Sunday": "09:00-22:00"
+        }
+      },
+      {
+        id: 5,
+        name: { th: "Brown Lady", zh: "布朗女士店", en: "Brown Lady" },
+        hours: {
+          "Monday": "12:00-22:00",
+          "Tuesday": "12:00-22:00",
+          "Wednesday": "12:00-22:00",
+          "Thursday": "12:00-22:00",
+          "Friday": "12:00-22:00",
+          "Saturday": "12:00-22:00",
+          "Sunday": "12:00-22:00"
+        }
+      },
+      {
+        id: 6,
+        name: { th: "Happy Tee", zh: "Happy Tee 店", en: "Happy Tee" },
+        hours: {
+          "Monday": "10:00-20:00",
+          "Tuesday": "10:00-20:00",
+          "Wednesday": "10:00-20:00",
+          "Thursday": "10:00-20:00",
+          "Friday": "10:00-20:00",
+          "Saturday": "10:00-20:00",
+          "Sunday": "10:00-20:00"
+        }
+      },
+      {
+        id: 7,
+        name: { th: "Big-E มือสอง", zh: "Big-E 二手店", en: "Big-E Second-hand" },
+        hours: {
+          "Monday": "09:00-18:00",
+          "Tuesday": "09:00-18:00",
+          "Wednesday": "09:00-18:00",
+          "Thursday": "09:00-18:00",
+          "Friday": "09:00-18:00",
+          "Saturday": "09:00-18:00",
+          "Sunday": "09:00-18:00"
+        }
+      },
+      {
+        id: 8,
+        name: { th: "Vtassei (ญี่ปุ่น)", zh: "Vtassei (日本)", en: "Vtassei (Japan)" },
+        hours: {
+          "Monday": "11:00-22:00",
+          "Tuesday": "11:00-22:00",
+          "Wednesday": "11:00-22:00",
+          "Thursday": "11:00-22:00",
+          "Friday": "11:00-22:00",
+          "Saturday": "11:00-22:00",
+          "Sunday": "11:00-22:00"
+        }
+      },
+      {
+        id: 9,
+        name: { th: "โรงเกลือมาร์เก็ต", zh: "Rong Kluea 市场", en: "Rong Kluea Market" },
+        hours: {
+          "Monday": "08:00-20:00",
+          "Tuesday": "08:00-20:00",
+          "Wednesday": "08:00-20:00",
+          "Thursday": "08:00-20:00",
+          "Friday": "08:00-20:00",
+          "Saturday": "08:00-20:00",
+          "Sunday": "08:00-20:00"
+        }
+      }
+    ];
+    function toggleSidebar() {
+      const sidebar = document.querySelector(".sidebar");
+      const btn = document.getElementById("toggleSidebar");
+
+      sidebar.classList.toggle("hidden");
+
+      if (sidebar.classList.contains("hidden")) {
+        // Sidebar ปิด
+        btn.style.left = "0";
+        btn.innerText = ">";
+      } else {
+        // Sidebar เปิด
+        btn.style.left = "350px";
+        btn.innerText = "<";
+      }
+    }
+
+    // ตั้งค่าเริ่มต้นของปุ่ม toggle ตามสถานะ sidebar
+    window.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.querySelector(".sidebar");
+      const btn = document.getElementById("toggleSidebar");
+
+      if (sidebar.classList.contains("hidden")) {
+        // sidebar ถูกซ่อน → ปุ่มเป็น >
+        btn.innerText = ">";
+        btn.style.left = "0";
+      } else {
+        // sidebar เปิด → ปุ่มเป็น <
+        btn.innerText = "<";
+        btn.style.left = "350px";
+      }
+    });
+
+    function loadShopsData() {
+      fetch("shops.json")
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("โหลดไฟล์ shops.json ไม่สำเร็จ");
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log("✅ DATA:", data);
+
+          // กันข้อมูลพัง
+          if (!Array.isArray(data)) {
+            throw new Error("รูปแบบข้อมูลไม่ถูกต้อง (ต้องเป็น array)");
+          }
+
+          foodShopsData = data;
+          applyFilters();
+        })
+        .catch(error => {
+          console.error("❌ โหลด JSON ไม่ได้:", error);
+
+          alert("โหลดข้อมูลร้านไม่สำเร็จ\nลองเปิดผ่าน Live Server หรือ localhost");
+        });
+    }
+    function toggleFavorite(id) {
+      if (favorites.includes(id)) {
+        favorites = favorites.filter(f => f !== id);
+      } else {
+        favorites.push(id);
+      }
+
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      applyFilters(); // refresh
+    }
+    // ฟังก์ชันเช็คเวลาปัจจุบัน
+    function isOpenNow(shop) {
+      const now = new Date();
+      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const day = dayNames[now.getDay()];
+      const hours = shop.hours[day];
+      if (hours === "closed") return false;
+
+      const [start, end] = hours.split('-').map(t => t.split(':').map(Number));
+      const startDate = new Date(now); startDate.setHours(start[0], start[1], 0, 0);
+      let endDate = new Date(now); endDate.setHours(end[0], end[1], 0, 0);
+      if (endDate < startDate) endDate.setDate(endDate.getDate() + 1);
+      return now >= startDate && now <= endDate;
+    }
+
+    // ตัวอย่างแสดงชื่อร้าน+สถานะ 3 ภาษา
+    shopsWithHoursMultiLang.forEach(shop => {
+      console.log(
+        `🇹🇭 ${shop.name.th} : ${isOpenNow(shop) ? "✅ เปิด" : "❌ ปิด"}\n` +
+        `🇨🇳 ${shop.name.zh} : ${isOpenNow(shop) ? "✅ 营业中" : "❌ 关闭"}\n` +
+        `🇬🇧 ${shop.name.en} : ${isOpenNow(shop) ? "✅ Open" : "❌ Closed"}\n`
+      );
+    });
+    const translations = {
+      title: { th: "ร้านทั้งหมด", zh: "所有商店", en: "All Shops" },
+      searchPlaceholder: { th: "ค้นหาร้าน...", zh: "搜索店铺...", en: "Search shops..." },
+      categoryOptions: {
+        all: { th: "ทุกหมวด", zh: "所有类别", en: "All Categories" },
+        Vintage: { th: "Vintage", zh: "复古", en: "Vintage" },
+        Streetwear: { th: "Streetwear", zh: "街头风", en: "Streetwear" },
+        ญี่ปุ่น: { th: "ญี่ปุ่น", zh: "日本风", en: "Japanese" }
+      },
+      priceOptions: {
+        all: { th: "ทุกช่วงราคา", zh: "所有价格", en: "All Prices" },
+        low: { th: "💸 ไม่แพง", zh: "💸 不贵", en: "💸 Cheap" },
+        mid: { th: "💰 กลาง", zh: "💰 中等", en: "💰 Medium" },
+        high: { th: "💎 หลากหลาย", zh: "💎 各种价格", en: "💎 Various" }
+      },
+      mapLinkText: { th: "📌 เปิดใน Google Maps", zh: "📌 在 Google Maps 打开", en: "📌 Open in Google Maps" },
+      lastUpdateText: {
+        th: "อัปเดตล่าสุด: ",
+        en: "Last updated: ",
+        zh: "最后更新: "
+      }
+    };
+
+    // ===== CHANGE LANGUAGE =====
+    function changeLanguage() {
+      currentLang = document.getElementById("language").value;
+      document.getElementById("title").innerText = translations.title[currentLang];
+      document.getElementById("search").placeholder = translations.searchPlaceholder[currentLang];
+document.getElementById("btnResetMap").innerText = buttonTranslations.resetMap[currentLang];
+document.getElementById("btnLocateUser").innerText = buttonTranslations.locateUser[currentLang];
+document.getElementById("btnSurvey").innerText = buttonTranslations.survey[currentLang];
+      // Category
+      const categorySelect = document.getElementById("category");
+      Object.keys(translations.categoryOptions).forEach((key, i) => {
+        categorySelect.options[i].text = translations.categoryOptions[key][currentLang];
+      });
+
+      // Price
+      const priceSelect = document.getElementById("price");
+      Object.keys(translations.priceOptions).forEach((key, i) => {
+        priceSelect.options[i].text = translations.priceOptions[key][currentLang];
+      });
+      updateDateDisplay(); // <-- อัปเดตวันที่ตามภาษา
+      applyFilters();
+    }
+
+    // ===== INIT MAP =====
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 13.8196, lng: 100.0405 },
+        zoom: 15
+      });
+      map.addListener("click", () => {
+        document.querySelector(".sidebar").classList.add("hidden");
+      });
+      updateDateDisplay();
+
+      loadShopsData();
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+      directionsRenderer.setMap(map);
+
+      // <-- เรียกใช้งาน locateUser() เพื่อแสดงตำแหน่งผู้ใช้
+      locateUser();
+    }
+    function generateImagesHTML(shop) {
+      let html = `<div style="display:flex; overflow-x:auto; gap:5px;">`;
+
+      shop.images.forEach(img => {
+        html += `
+      <img src="${img}"
+           onclick="openModal('${img}')"
+           style="width:200px; height:120px; object-fit:cover; border-radius:8px; cursor:pointer;">
+    `;
+      });
+
+      html += `</div>`;
+      return html;
+    }
+    function locateUser() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            const pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            userPosition = pos;
+
+            if (userMarker) {
+              userMarker.setPosition(pos);
+            } else {
+              userMarker = new google.maps.Marker({
+                position: pos,
+                map: map,
+                icon: {
+                  url: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                  scaledSize: new google.maps.Size(40, 40)
+                },
+                title: currentLang === 'th' ? "คุณอยู่ที่นี่" : currentLang === 'zh' ? "你的位置" : "You are here"
+              });
+            }
+
+            map.panTo(pos);
+            applyFilters();
+          },
+          () => {
+            alert(currentLang === 'th' ? "ไม่สามารถระบุตำแหน่งของคุณได้" :
+              currentLang === 'zh' ? "无法获取您的位置" :
+                "Cannot get your location");
+          }
+        );
+      } else {
+        alert(currentLang === 'th' ? "เบราว์เซอร์นี้ไม่รองรับการหาตำแหน่ง" :
+          currentLang === 'zh' ? "此浏览器不支持定位" :
+            "Browser doesn't support geolocation");
+      }
+    }
+    // ===== FILTER =====
+    function applyFilters() {
+      const search = document.getElementById("search").value.toLowerCase();
+      const category = document.getElementById("category").value;
+      const price = document.getElementById("price").value;
+
+      // ✅ STEP 1: filter ก่อน
+      let filtered = foodShopsData.filter(shop => {
+        const name = shop.name[currentLang].toLowerCase();
+        return (
+          (category === "all" || shop.food.includes(category)) &&
+          (price === "all" || shop.price === price) &&
+          name.includes(search)
+        );
+      });
+
+      // ✅ STEP 2: ค่อย sort (สำคัญ!!)
+      if (userPosition) {
+        filtered.sort((a, b) => {
+          const d1 = getDistance(userPosition.lat, userPosition.lng, a.lat, a.lng);
+          const d2 = getDistance(userPosition.lat, userPosition.lng, b.lat, b.lng);
+          return d1 - d2;
+        });
+      }
+
+      renderMarkers(filtered);
+      renderList(filtered);
+    }
+    // ===== MARKERS =====
+    function openModal(imgSrc) {
+      document.getElementById("imageModal").style.display = "flex";
+      document.getElementById("modalImg").src = imgSrc;
+    }
+
+    function closeModal() {
+      document.getElementById("imageModal").style.display = "none";
+    }
+    function renderMarkers(data) {
+      // เคลียร์ marker เก่า
+      markers.forEach(m => m.setMap(null));
+      markers = [];
+
+      data.forEach(shop => {
+        // เลือกสีตามราคา
+        let color;
+        switch (shop.price) {
+          case "low": color = "green"; break;
+          case "mid": color = "yellow"; break;
+          case "high": color = "red"; break;
+          default: color = "blue";
+        }
+
+        // สร้าง marker
+        const marker = new google.maps.Marker({
+          position: { lat: shop.lat, lng: shop.lng },
+          map: map,
+          icon: `https://maps.google.com/mapfiles/ms/icons/${color}-dot.png`
+        });
+
+        // เช็คสถานะเปิด/ปิด
+        const shopWithHours = shopsWithHoursMultiLang.find(s => s.id === shop.id);
+        const openNow = shopWithHours ? isOpenNow(shopWithHours) : false;
+        let openText = "";
+        if (currentLang === 'th') openText = openNow ? "✅ เปิดตอนนี้" : "❌ ปิดตอนนี้";
+        else if (currentLang === 'zh') openText = openNow ? "✅ 营业中" : "❌ 关闭";
+        else openText = openNow ? "✅ Open now" : "❌ Closed now";
+
+        // สร้าง InfoWindow
+        const info = new google.maps.InfoWindow({
+          content: `
+                ${generateImagesHTML(shop)}
+
+<button onclick="openModal('${shop.images[0]}')" 
+style="width:100%; margin-top:5px;">
+📷 ดูรูปทั้งหมด
+</button>
+
+<br>
+<div style="display:flex; gap:5px; margin-top:5px;">
+  <button onclick="getRouteToShop(${shop.lat}, ${shop.lng}, 'WALKING')" style="flex:1;">🚶</button>
+  <button onclick="getRouteToShop(${shop.lat}, ${shop.lng}, 'DRIVING')" style="flex:1;">🚗</button>
+  <button onclick="getRouteToShop(${shop.lat}, ${shop.lng}, 'BICYCLING')" style="flex:1;">🚴</button>
+</div>
+<div style="font-size:12px; color:#666; text-align:center;">
+  *เส้นทางจะเปิดใน Google Maps
+</div>
+                    <h3 style="margin:0">${shop.name[currentLang]}</h3>
+                    <p>⭐ ${shop.rating}</p>
+                    <p>📍 ${shop.location[currentLang]}</p>
+                    <p>🏷️ ${shop.food.join(", ")}</p>
+                    <p>💰 ${shop.priceText[currentLang]}</p>
+                    <p style="font-size:13px">${shop.description[currentLang]}</p>
+                    <p>${openText}</p>
+<hr>
+<div style="font-size:13px">
+  <b>${currentLang === 'th' ? 'เวลาทำการ' : currentLang === 'zh' ? '营业时间' : 'Opening Hours'}:</b><br>
+  ${shopWithHours ? Object.entries(shopWithHours.hours).map(([day, h]) => {
+            let dayText;
+            if (currentLang === 'th') {
+              const daysTH = { Sunday: "อาทิตย์", Monday: "จันทร์", Tuesday: "อังคาร", Wednesday: "พุธ", Thursday: "พฤหัสบดี", Friday: "ศุกร์", Saturday: "เสาร์" };
+              dayText = daysTH[day];
+            } else if (currentLang === 'zh') {
+              const daysCN = { Sunday: "周日", Monday: "周一", Tuesday: "周二", Wednesday: "周三", Thursday: "周四", Friday: "周五", Saturday: "周六" };
+              dayText = daysCN[day];
+            } else dayText = day;
+            return `${dayText}: ${h}`;
+          }).join("<br>") : "No data"}
+</div>
+                    <a href="${shop.link}" target="_blank">${translations.mapLinkText[currentLang]}</a>
+					<br><button onclick="getRouteToShop(${shop.lat}, ${shop.lng})" style="margin-top:5px;padding:5px;width:100%;">
+${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? '查看路线' : 'Get Directions'}
+</button>
+                </div>
+            `
+        });
+
+        // คลิก marker
+        marker.addListener("click", () => {
+          if (activeInfoWindow) activeInfoWindow.close();
+          info.open(map, marker);
+          activeInfoWindow = info;
+          map.panTo(marker.getPosition());
+          marker.setAnimation(google.maps.Animation.BOUNCE);
+          setTimeout(() => marker.setAnimation(null), 1400);
+        });
+
+        marker.info = info;
+        markers.push(marker);
+      });
+    }
+    // ===== SIDEBAR =====
+    function renderList(data) {
+      const list = document.getElementById("shopList");
+      list.innerHTML = "";
+
+      data.forEach(shop => {
+        const openNow = isOpenNow(shopsWithHoursMultiLang.find(s => s.id === shop.id));
+
+        const distance = userPosition
+          ? getDistance(userPosition.lat, userPosition.lng, shop.lat, shop.lng).toFixed(2)
+          : null;
+
+        const div = document.createElement("div");
+        div.className = "shop-card";
+
+        if (openNow) {
+          div.classList.add("shop-open");
+        }
+
+        div.innerHTML = `
+      <img src="${shop.images[0]}" style="
+        width:100%;
+        height:120px;
+        object-fit:cover;
+        border-radius:8px;
+        margin-bottom:5px;
+      ">
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <b>${shop.name[currentLang]}</b>
+        <span onclick="event.stopPropagation(); toggleFavorite(${shop.id})" style="cursor:pointer;">
+          ${favorites.includes(shop.id) ? "❤️" : "🤍"}
+        </span>
+      </div>
+
+      ⭐ ${shop.rating}<br>
+       ${shop.priceText[currentLang]}<br>
+      📍 ${shop.location[currentLang]}<br>
+      ${distance ? `📏 ${distance} km<br>` : ""}
+      ${currentLang === 'th' ? (openNow ? "✅ เปิดตอนนี้" : "❌ ปิดตอนนี้") :
+            currentLang === 'zh' ? (openNow ? "✅ 营业中" : "❌ 关闭") :
+              (openNow ? "✅ Open now" : "❌ Closed now")}
+    `;
+
+        div.onclick = () => {
+          map.setCenter({ lat: shop.lat, lng: shop.lng });
+          map.setZoom(17);
+
+          const marker = markers.find(m =>
+            Math.abs(m.getPosition().lat() - shop.lat) < 0.00001 &&
+            m.getPosition().lng() === shop.lng
+          );
+
+          if (marker) {
+            if (activeInfoWindow) activeInfoWindow.close();
+
+            marker.info.open(map, marker);
+            activeInfoWindow = marker.info;
+
+            map.panTo(marker.getPosition());
+
+            marker.setAnimation(google.maps.Animation.BOUNCE);
+            setTimeout(() => marker.setAnimation(null), 1000);
+          }
+        };
+
+        list.appendChild(div);
+      });
+    }
+    function resetMap() {
+      map.setCenter({ lat: 13.8196, lng: 100.0405 });
+      map.setZoom(15);
+
+      if (activeInfoWindow) activeInfoWindow.close();
+    }
+    function getRouteToShop(lat, lng, mode) {
+      let travelMode = "walking";
+
+      if (mode === "DRIVING") travelMode = "driving";
+      if (mode === "BICYCLING") travelMode = "bicycling";
+
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${travelMode}`;
+      window.open(url, "_blank");
+    }
+    function goRoute(shopId, lat, lng) {
+      const mode = document.getElementById(`mode-${shopId}`).value;
+
+      let travelMode = "walking";
+      if (mode === "DRIVING") travelMode = "driving";
+      if (mode === "BICYCLING") travelMode = "bicycling";
+
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${travelMode}`;
+
+      window.open(url, "_blank"); // เปิดแท็บใหม่
+    }
+    function getDistance(lat1, lng1, lat2, lng2) {
+      const R = 6371; // km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    // ===== DISPLAY LAST UPDATE DATE =====
+    function updateDateDisplay() {
+      const dateContainerId = "lastUpdate";
+      let dateContainer = document.getElementById(dateContainerId);
+
+      // สร้าง div ถ้ายังไม่มี
+      if (!dateContainer) {
+        dateContainer = document.createElement("div");
+        dateContainer.id = dateContainerId;
+        dateContainer.style.marginBottom = "10px";
+        dateContainer.style.fontSize = "14px";
+        dateContainer.style.color = "#555";
+        document.querySelector(".sidebar").insertBefore(dateContainer, document.getElementById("title").nextSibling);
+      }
+
+      const today = new Date();
+      let formattedDate = "";
+
+      switch (currentLang) {
+        case "th":
+          formattedDate = today.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+          break;
+        case "en":
+          formattedDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          break;
+        case "zh":
+          // แก้ตรงนี้
+          const day = String(today.getDate()).padStart(2, '0');
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          formattedDate = `${today.getFullYear()}年${month}月${day}日`;
+          break;
+      }
+
+      dateContainer.innerText = translations.lastUpdateText[currentLang] + formattedDate;
+    }
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA3EDtT1ilnNh2q9owuiTIDRqvy_MDh-B0&callback=initMap">
+    </script>
+  <div id="imageModal" style="
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.8);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+">
+
+    <span onclick="closeModal()" style="
+    position:absolute;
+    top:20px; right:30px;
+    font-size:40px;
+    color:white;
+    cursor:pointer;
+  ">×</span>
+
+    <img id="modalImg" style="
+    max-width:90%;
+    max-height:90%;
+    border-radius:10px;
+  ">
+  </div>
+</body>
+
+</html>
