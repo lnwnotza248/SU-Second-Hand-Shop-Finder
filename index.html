@@ -7,6 +7,13 @@
   <title>แผนที่ร้านเสื้อผ้ามือสองรอบมหาวิทยาลัยศิลปากร</title>
 
   <style>
+    #linkForm input,
+#linkForm textarea,
+#linkForm select {
+  width: 100%;
+  box-sizing: border-box; /* 🔥 สำคัญมาก */
+  
+}
     body {
       font-family: 'Sarabun', sans-serif;
       margin: 0;
@@ -49,7 +56,7 @@
       transform: translateY(-2px);
       transition: 0.2s;
     }
-    
+
     /* ===== TOGGLE BUTTON ===== */
     #toggleSidebar {
       position: fixed;
@@ -90,17 +97,51 @@
 
     @media (max-width: 768px) {
       body {
-        flex-direction: column;
+        flex-direction: column-reverse;
       }
 
       .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
         width: 100%;
-        height: 40%;
-        overflow-y: scroll;
+        height: 45vh;
+        max-height: 45vh;
+        overflow-y: auto;
+        transform: translateY(0);
+        transition: transform 0.3s ease;
+        z-index: 1000;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        padding: 10px 12px 70px 12px;
+        /* เพิ่ม padding bottom กันปุ่มบัง */
+        box-sizing: border-box;
+      }
+
+      .sidebar.hidden {
+        transform: translateY(100%);
+        width: 100%;
       }
 
       #map {
-        height: 60%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #toggleSidebar {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        top: auto;
+        transform: translateX(-50%);
+        border-radius: 20px;
+        padding: 10px 24px;
+        font-size: 14px;
+        z-index: 10001;
+        transition: bottom 0.3s ease;
       }
     }
 
@@ -114,9 +155,12 @@
       margin-bottom: 8px;
       padding: 6px;
     }
-.controls button:last-child {
-  margin-bottom: 15px; /* เพิ่มระยะห่างด้านล่างปุ่มสอบถาม */
-}
+
+    .controls button:last-child {
+      margin-bottom: 15px;
+      /* เพิ่มระยะห่างด้านล่างปุ่มสอบถาม */
+    }
+
     .controls input#search,
     .controls select {
       box-sizing: border-box;
@@ -129,11 +173,20 @@
 
 <body>
   <button id="toggleSidebar" onclick="toggleSidebar()">></button>
-  
-  <div class="sidebar">
-    
-    <h2 id="title">ร้านทั้งหมด</h2>
 
+  <div class="sidebar">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <h2 id="title" style="margin:0;">ร้านทั้งหมด</h2>
+      <span id="shopCount" style="
+    font-size:13px;
+    background:#111;
+    color:white;
+    padding:3px 8px;
+    border-radius:12px;
+  "></span>
+    </div>
+    <div id="lastUpdate" style="margin-bottom:10px; font-size:14px; color:#555;"></div>
     <div class="controls">
       <select id="language" onchange="changeLanguage()">
         <option value="th">ไทย</option>
@@ -157,21 +210,27 @@
         <option value="high">💎 หลากหลาย</option>
       </select>
       <button id="btnResetMap" onclick="resetMap()" style="width:100%; padding:6px;">🔄 รีเซ็ตแผนที่</button>
-<button id="btnLocateUser" onclick="locateUser()" style="width:100%; padding:6px; margin-top:5px;">📍 ตำแหน่งของฉัน</button>
-<button id="btnSurvey" onclick="window.open('https://forms.gle/tyC2Jc1Na3iUEhqs6', '_blank')" style="width:100%; padding:6px; margin-top:5px;">📝 กรอกแบบสอบถาม</button>
-<button onclick="openAddShopForm()" style="width:100%; padding:6px; margin-top:5px;">
-➕ เพิ่มร้าน
+      <button id="btnFavoriteFilter" onclick="toggleFavoriteFilter()"
+        style="width:100%; padding:6px; margin-top:5px;">❤️ แสดงเฉพาะร้านที่ชอบ</button>
+      <button id="btnLocateUser" onclick="locateUser()"
+        style="width:100%; padding:6px; margin-top:5px;">📍ตำแหน่งของฉัน</button>
+      <button id="btnSurvey" onclick="window.open('https://forms.gle/tyC2Jc1Na3iUEhqs6', '_blank')"
+        style="width:100%; padding:6px; margin-top:5px;">📝 กรอกแบบสอบถาม</button>
+      <button id="btnAddShop" onclick="openLinkForm()" style="width:100%; padding:6px; margin-top:5px;">
+  ➕ เพิ่มร้านจากลิงก์
 </button>
-</div>
+    </div>
 
     <div id="shopList"></div>
   </div>
 
   <div id="map"></div>
 
+
+
   <script>
     // ===== DATA =====
-
+    let showOnlyFavorites = false;
     let foodShopsData = [];
 
     // ===== GLOBAL =====
@@ -183,11 +242,38 @@
     let currentLang = "th";
     let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
     // ===== TRANSLATIONS =====
-    const buttonTranslations = {
-  resetMap: { th: "🔄 รีเซ็ตแผนที่", zh: "🔄 重置地图", en: "🔄 Reset Map" },
-  locateUser: { th: "📍 ตำแหน่งของฉัน", zh: "📍 我的位置", en: "📍 My Location" },
-  survey: { th: "📝 กรอกแบบสอบถาม", zh: "📝 填写问卷", en: "📝 Fill Survey" }
+    const formTranslations = {
+
+      
+  title: { th: "➕ เพิ่มร้านใหม่", zh: "➕ 添加新店", en: "➕ Add New Shop" },
+  link: { th: "🔗 ลิงก์ Google Maps", zh: "🔗 Google 地图链接", en: "🔗 Google Maps Link" },
+  hours: { th: "⏰ เวลาเปิด-ปิด", zh: "⏰ 营业时间", en: "⏰ Opening Hours" },
+  rating: { th: "⭐ Rating", zh: "⭐ 评分", en: "⭐ Rating" },
+  location: { th: "📍 ที่อยู่", zh: "📍 地址", en: "📍 Location" },
+  desc: { th: "💬 รายละเอียด", zh: "💬 描述", en: "💬 Description" },
+  price: { th: "💰 ราคา", zh: "💰 价格", en: "💰 Price" },
+  image: { th: "📷 รูปภาพ", zh: "📷 图片", en: "📷 Image" },
+  add: { th: "➕ เพิ่ม", zh: "➕ 添加", en: "➕ Add" },
+  cancel: { th: "❌ ยกเลิก", zh: "❌ 取消", en: "❌ Cancel" },
+
+  placeholderLink: { th: "วางลิงก์...", zh: "粘贴链接...", en: "Paste link..." },
+  placeholderHours: { th: "เช่น 10:00-20:00", zh: "例如 10:00-20:00", en: "e.g. 10:00-20:00" },
+  placeholderLocation: { th: "เช่น หน้ามหาวิทยาลัย", zh: "例如 大学附近", en: "e.g. near university" },
+  placeholderDesc: { th: "เช่น เสื้อวินเทจ", zh: "例如 复古服装", en: "e.g. vintage clothes" },
+  priceOptions: {
+  low: { th: "💸 ไม่แพง(100-200)", zh: "💸 便宜(100-200)", en: "💸 Cheap (100-200)" },
+  mid: { th: "💰 กลาง(100-500)", zh: "💰 中等(100-500)", en: "💰 Medium (100-500)" },
+  high: { th: "💎 ราคาหลากหลาย(100-1000)", zh: "💎 多种价格(100-1000)", en: "💎 Various (100-1000)" }
+}
 };
+
+    const buttonTranslations = {
+      resetMap: { th: "🔄 รีเซ็ตแผนที่", zh: "🔄 重置地图", en: "🔄 Reset Map" },
+      locateUser: { th: "📍 ตำแหน่งของฉัน", zh: "📍 我的位置", en: "📍 My Location" },
+      survey: { th: "📝 กรอกแบบสอบถาม", zh: "📝 填写问卷", en: "📝 Fill Survey" },
+      favorite: { th: "❤️ ร้านที่ชอบ", zh: "❤️ 收藏店铺", en: "❤️ Favorites" },
+      addShop: { th: "➕ เพิ่มร้านจากลิงก์", zh: "➕ 添加店铺", en: "➕ Add Shop" },
+    };
     const shopsWithHoursMultiLang = [
       {
         id: 0,
@@ -323,17 +409,20 @@
     function toggleSidebar() {
       const sidebar = document.querySelector(".sidebar");
       const btn = document.getElementById("toggleSidebar");
+      const isMobile = window.innerWidth <= 768;
 
       sidebar.classList.toggle("hidden");
 
-      if (sidebar.classList.contains("hidden")) {
-        // Sidebar ปิด
-        btn.style.left = "0";
-        btn.innerText = ">";
+      if (isMobile) {
+        btn.innerText = sidebar.classList.contains("hidden") ? "☰ แสดงร้าน" : "✕ ซ่อน";
       } else {
-        // Sidebar เปิด
-        btn.style.left = "350px";
-        btn.innerText = "<";
+        if (sidebar.classList.contains("hidden")) {
+          btn.style.left = "0";
+          btn.innerText = ">";
+        } else {
+          btn.style.left = "350px";
+          btn.innerText = "<";
+        }
       }
     }
 
@@ -341,33 +430,49 @@
     window.addEventListener("DOMContentLoaded", () => {
       const sidebar = document.querySelector(".sidebar");
       const btn = document.getElementById("toggleSidebar");
+      const isMobile = window.innerWidth <= 768;
 
-      if (sidebar.classList.contains("hidden")) {
-        // sidebar ถูกซ่อน → ปุ่มเป็น >
-        btn.innerText = ">";
-        btn.style.left = "0";
+      if (isMobile) {
+        // ✅ เช็คสถานะจริงของ sidebar
+        if (sidebar.classList.contains("hidden")) {
+          btn.innerText = "☰ แสดงร้าน";
+        } else {
+          btn.innerText = "✕ ซ่อน";
+        }
+
+        btn.style.left = "50%";
+        btn.style.top = "auto";
       } else {
-        // sidebar เปิด → ปุ่มเป็น <
-        btn.innerText = "<";
-        btn.style.left = "350px";
+        if (sidebar.classList.contains("hidden")) {
+          btn.innerText = ">";
+          btn.style.left = "0";
+        } else {
+          btn.innerText = "<";
+          btn.style.left = "350px";
+        }
       }
     });
 
     function loadAllShops() {
-  fetch("shops.json")
-    .then(response => response.json())
-    .then(data => {
       let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
 
-      foodShopsData = [...data, ...userShops];
+      fetch("shops.json")
+        .then(response => {
+          if (!response.ok) throw new Error("โหลด shops.json ไม่ได้");
+          return response.json();
+        })
+        .then(data => {
+          foodShopsData = [...data, ...userShops];
+          applyFilters();
+        })
+        .catch(err => {
+          console.warn("ใช้เฉพาะ userShops แทน:", err);
 
-      applyFilters();
-    })
-    .catch(err => {
-      console.error(err);
-      alert("โหลดร้านไม่สำเร็จ");
-    });
-}
+          // ✅ fallback
+          foodShopsData = [...userShops];
+          applyFilters();
+        });
+    }
     function toggleFavorite(id) {
       if (favorites.includes(id)) {
         favorites = favorites.filter(f => f !== id);
@@ -378,6 +483,22 @@
       localStorage.setItem("favorites", JSON.stringify(favorites));
       applyFilters(); // refresh
     }
+    function toggleFavoriteFilter() {
+      showOnlyFavorites = !showOnlyFavorites;
+
+      const btn = document.getElementById("btnFavoriteFilter");
+
+      if (showOnlyFavorites) {
+        btn.style.background = "#ef4444"; // แดงตอนเปิด
+        btn.style.color = "white";
+      } else {
+        btn.style.background = "";
+        btn.style.color = "";
+      }
+
+      applyFilters();
+    }
+
     // ฟังก์ชันเช็คเวลาปัจจุบัน
     function isOpenNow(shop) {
       const now = new Date();
@@ -401,6 +522,9 @@
         `🇬🇧 ${shop.name.en} : ${isOpenNow(shop) ? "✅ Open" : "❌ Closed"}\n`
       );
     });
+
+    
+
     const translations = {
       title: { th: "ร้านทั้งหมด", zh: "所有商店", en: "All Shops" },
       searchPlaceholder: { th: "ค้นหาร้าน...", zh: "搜索店铺...", en: "Search shops..." },
@@ -421,7 +545,12 @@
         th: "อัปเดตล่าสุด: ",
         en: "Last updated: ",
         zh: "最后更新: "
-      }
+      },
+      unknown: {
+  th: "ไม่ทราบ",
+  zh: "未知",
+  en: "Unknown"
+}
     };
 
     // ===== CHANGE LANGUAGE =====
@@ -429,9 +558,37 @@
       currentLang = document.getElementById("language").value;
       document.getElementById("title").innerText = translations.title[currentLang];
       document.getElementById("search").placeholder = translations.searchPlaceholder[currentLang];
-document.getElementById("btnResetMap").innerText = buttonTranslations.resetMap[currentLang];
-document.getElementById("btnLocateUser").innerText = buttonTranslations.locateUser[currentLang];
-document.getElementById("btnSurvey").innerText = buttonTranslations.survey[currentLang];
+      document.getElementById("btnResetMap").innerText = buttonTranslations.resetMap[currentLang];
+      document.getElementById("btnLocateUser").innerText = buttonTranslations.locateUser[currentLang];
+      document.getElementById("btnSurvey").innerText = buttonTranslations.survey[currentLang];
+      document.getElementById("btnFavoriteFilter").innerText = buttonTranslations.favorite[currentLang];
+      document.getElementById("btnAddShop").innerText = buttonTranslations.addShop[currentLang];
+      
+// ===== PRICE DROPDOWN (FORM) =====
+const priceSelectForm = document.getElementById("shopPrice");
+
+priceSelectForm.options[0].text = formTranslations.priceOptions.low[currentLang];
+priceSelectForm.options[1].text = formTranslations.priceOptions.mid[currentLang];
+priceSelectForm.options[2].text = formTranslations.priceOptions.high[currentLang];
+
+      // ===== FORM =====
+document.getElementById("formTitle").innerText = formTranslations.title[currentLang];
+document.getElementById("labelLink").innerText = formTranslations.link[currentLang];
+document.getElementById("labelHours").innerText = formTranslations.hours[currentLang];
+document.getElementById("labelRating").innerText = formTranslations.rating[currentLang];
+document.getElementById("labelLocation").innerText = formTranslations.location[currentLang];
+document.getElementById("labelDesc").innerText = formTranslations.desc[currentLang];
+document.getElementById("labelPrice").innerText = formTranslations.price[currentLang];
+document.getElementById("labelImage").innerText = formTranslations.image[currentLang];
+
+document.getElementById("btnSubmit").innerText = formTranslations.add[currentLang];
+document.getElementById("btnCancel").innerText = formTranslations.cancel[currentLang];
+
+// placeholder
+document.getElementById("mapLink").placeholder = formTranslations.placeholderLink[currentLang];
+document.getElementById("shopHours").placeholder = formTranslations.placeholderHours[currentLang];
+document.getElementById("shopLocation").placeholder = formTranslations.placeholderLocation[currentLang];
+document.getElementById("shopDesc").placeholder = formTranslations.placeholderDesc[currentLang];
       // Category
       const categorySelect = document.getElementById("category");
       Object.keys(translations.categoryOptions).forEach((key, i) => {
@@ -454,7 +611,18 @@ document.getElementById("btnSurvey").innerText = buttonTranslations.survey[curre
         zoom: 15
       });
       map.addListener("click", () => {
-        document.querySelector(".sidebar").classList.add("hidden");
+        const sidebar = document.querySelector(".sidebar");
+        const btn = document.getElementById("toggleSidebar");
+        const isMobile = window.innerWidth <= 768;
+
+        sidebar.classList.add("hidden");
+
+        if (isMobile) {
+          btn.innerText = "☰ แสดงร้าน";
+        } else {
+          btn.style.left = "0";
+          btn.innerText = ">";
+        }
       });
       updateDateDisplay();
 
@@ -521,28 +689,19 @@ document.getElementById("btnSurvey").innerText = buttonTranslations.survey[curre
     }
     // ===== FILTER =====
     function applyFilters() {
-      const search = document.getElementById("search").value.toLowerCase();
+      const keyword = document.getElementById("search").value.toLowerCase();
       const category = document.getElementById("category").value;
       const price = document.getElementById("price").value;
 
-      // ✅ STEP 1: filter ก่อน
-      let filtered = foodShopsData.filter(shop => {
-        const name = shop.name[currentLang].toLowerCase();
-        return (
-          (category === "all" || shop.food.includes(category)) &&
-          (price === "all" || shop.price === price) &&
-          name.includes(search)
-        );
-      });
+      const filtered = foodShopsData.filter(shop => {
+        const matchName = shop.name[currentLang].toLowerCase().includes(keyword);
+        const matchCategory = category === "all" || shop.category === category;
+        const matchPrice = price === "all" || shop.price === price;
 
-      // ✅ STEP 2: ค่อย sort (สำคัญ!!)
-      if (userPosition) {
-        filtered.sort((a, b) => {
-          const d1 = getDistance(userPosition.lat, userPosition.lng, a.lat, a.lng);
-          const d2 = getDistance(userPosition.lat, userPosition.lng, b.lat, b.lng);
-          return d1 - d2;
-        });
-      }
+        const matchFavorite = !showOnlyFavorites || favorites.includes(shop.id);
+
+        return matchName && matchCategory && matchPrice && matchFavorite;
+      });
 
       renderMarkers(filtered);
       renderList(filtered);
@@ -556,12 +715,12 @@ document.getElementById("btnSurvey").innerText = buttonTranslations.survey[curre
     function closeModal() {
       document.getElementById("imageModal").style.display = "none";
     }
-    function renderMarkers(data) {
+    function renderMarkers(filtered) {
       // เคลียร์ marker เก่า
       markers.forEach(m => m.setMap(null));
       markers = [];
 
-      data.forEach(shop => {
+      filtered.forEach(shop => {
         // เลือกสีตามราคา
         let color;
         switch (shop.price) {
@@ -649,13 +808,36 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
         markers.push(marker);
       });
     }
+
+    function deleteShop(id) {
+      let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
+
+      userShops = userShops.filter(shop => shop.id !== id);
+
+      localStorage.setItem("userShops", JSON.stringify(userShops));
+
+      loadAllShops(); // refresh ใหม่
+    }
+    function deleteShop(id) {
+      if (!confirm("คุณแน่ใจว่าจะลบร้านนี้?")) return;
+
+      let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
+      userShops = userShops.filter(shop => shop.id !== id);
+
+      localStorage.setItem("userShops", JSON.stringify(userShops));
+      loadAllShops();
+    }
+
     // ===== SIDEBAR =====
-    function renderList(data) {
+    function renderList(filtered) {
+      document.getElementById("shopCount").innerText =
+        `${currentLang === 'th' ? 'ทั้งหมด' : currentLang === 'zh' ? '总计' : 'Total'} ${filtered.length}`;
       const list = document.getElementById("shopList");
       list.innerHTML = "";
 
-      data.forEach(shop => {
-        const openNow = isOpenNow(shopsWithHoursMultiLang.find(s => s.id === shop.id));
+      filtered.forEach(shop => {
+        const shopWithHours = shopsWithHoursMultiLang.find(s => s.id === shop.id);
+        const openNow = shopWithHours ? isOpenNow(shopWithHours) : false;
 
         const distance = userPosition
           ? getDistance(userPosition.lat, userPosition.lng, shop.lat, shop.lng).toFixed(2)
@@ -668,30 +850,48 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
           div.classList.add("shop-open");
         }
 
+        div.style.position = "relative"; // ✅ ต้องมี
+
         div.innerHTML = `
-      <img src="${shop.images[0]}" style="
-        width:100%;
-        height:120px;
-        object-fit:cover;
-        border-radius:8px;
-        margin-bottom:5px;
-      ">
+  <img src="${shop.images[0]}" style="
+    width:100%;
+    height:120px;
+    object-fit:cover;
+    border-radius:8px;
+    margin-bottom:5px;
+  ">
 
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <b>${shop.name[currentLang]}</b>
-        <span onclick="event.stopPropagation(); toggleFavorite(${shop.id})" style="cursor:pointer;">
-          ${favorites.includes(shop.id) ? "❤️" : "🤍"}
-        </span>
-      </div>
+  ${shop.isUserAdded ? `
+    <div style="position:absolute; bottom:8px; right:8px;">
+      
 
-      ⭐ ${shop.rating}<br>
-       ${shop.priceText[currentLang]}<br>
-      📍 ${shop.location[currentLang]}<br>
-      ${distance ? `📏 ${distance} km<br>` : ""}
-      ${currentLang === 'th' ? (openNow ? "✅ เปิดตอนนี้" : "❌ ปิดตอนนี้") :
+      <span onclick="event.stopPropagation(); deleteShop(${shop.id})"
+  style="cursor:pointer; font-size:20px;"
+  onmouseover="this.style.transform='scale(1.2)'"
+  onmouseout="this.style.transform='scale(1)'"
+>
+  🗑️
+</span>
+
+    </div>
+  ` : ""}
+
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <b>${shop.name[currentLang]}</b>
+    <span onclick="event.stopPropagation(); toggleFavorite(${shop.id})" style="cursor:pointer;">
+      ${favorites.includes(shop.id) ? "❤️" : "🤍"}
+    </span>
+  </div>
+
+  ⭐ ${shop.rating}<br>
+  ${shop.priceText[currentLang]}<br>
+  📍 ${shop.location[currentLang]}<br>
+  ❓ ${shop.hoursText || translations.unknown[currentLang]}<br>
+  ${distance ? `📏 ${distance} km<br>` : ""}
+  ${currentLang === 'th' ? (openNow ? "✅ เปิดตอนนี้" : "❌ ปิดตอนนี้") :
             currentLang === 'zh' ? (openNow ? "✅ 营业中" : "❌ 关闭") :
               (openNow ? "✅ Open now" : "❌ Closed now")}
-    `;
+`;
 
         div.onclick = () => {
           map.setCenter({ lat: shop.lat, lng: shop.lng });
@@ -718,6 +918,115 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
         list.appendChild(div);
       });
     }
+
+
+    function extractDataFromGoogleMaps(url) {
+      let lat, lng;
+
+      // ✅ ใช้พิกัดจริง (3d / 4d)
+      const realMatch = url.match(/!3d([-0-9.]+)!4d([-0-9.]+)/);
+
+      // fallback ถ้าไม่มี
+      const coordMatch = url.match(/@([-0-9.]+),([-0-9.]+)/);
+
+      if (realMatch) {
+        lat = parseFloat(realMatch[1]);
+        lng = parseFloat(realMatch[2]);
+      } else if (coordMatch) {
+        lat = parseFloat(coordMatch[1]);
+        lng = parseFloat(coordMatch[2]);
+      } else {
+        return null;
+      }
+
+      // ดึงชื่อร้าน
+      const nameMatch = url.match(/place\/([^/]+)/);
+      let name = "ร้านใหม่";
+
+      if (nameMatch) {
+        name = decodeURIComponent(nameMatch[1].replace(/\+/g, " "));
+      }
+
+      return { lat, lng, name };
+    }
+
+
+    function addShopFromLink() {
+  const url = document.getElementById("mapLink").value;
+  const data = extractDataFromGoogleMaps(url);
+
+  if (!data) {
+    alert("ลิงก์ไม่ถูกต้อง");
+    return;
+  }
+
+  // 👉 ดึงค่าจาก input
+  const hours = document.getElementById("shopHours").value || translations.unknown[currentLang];
+
+const ratingInput = document.getElementById("shopRating").value;
+const rating = ratingInput ? parseFloat(ratingInput) : translations.unknown[currentLang];
+
+const location = document.getElementById("shopLocation").value || translations.unknown[currentLang];
+
+const desc = document.getElementById("shopDesc").value || translations.unknown[currentLang];
+  const price = document.getElementById("shopPrice").value || "low";
+
+  // 👉 รูป
+  const file = document.getElementById("shopImage").files[0];
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      saveShop(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    saveShop("https://via.placeholder.com/200");
+  }
+
+  function saveShop(img) {
+    const newShop = {
+      id: Date.now(),
+      isUserAdded: true,
+      name: {
+        th: data.name,
+        en: data.name,
+        zh: data.name
+      },
+      lat: data.lat,
+      lng: data.lng,
+      rating: rating,
+      price: price,
+      priceText: {
+        th: price === "low" ? "💸 ไม่แพง" :
+            price === "mid" ? "💰 กลาง" : "💎 แพง",
+        en: price,
+        zh: price
+      },
+      food: ["Other"],
+      location: {
+        th: location,
+        en: location,
+        zh: location
+      },
+      description: {
+        th: desc,
+        en: desc,
+        zh: desc
+      },
+      hoursText: hours,
+      images: [img]
+    };
+
+    let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
+    userShops.push(newShop);
+    localStorage.setItem("userShops", JSON.stringify(userShops));
+
+    closeLinkForm();
+    loadAllShops();
+  }
+}
+
     function resetMap() {
       map.setCenter({ lat: 13.8196, lng: 100.0405 });
       map.setZoom(15);
@@ -725,12 +1034,17 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
       if (activeInfoWindow) activeInfoWindow.close();
     }
     function getRouteToShop(lat, lng, mode) {
-      let travelMode = "walking";
+      if (!userPosition) {
+        alert("กรุณากด 'ตำแหน่งของฉัน' ก่อน");
+        return;
+      }
 
+      let travelMode = "walking";
       if (mode === "DRIVING") travelMode = "driving";
       if (mode === "BICYCLING") travelMode = "bicycling";
 
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${travelMode}`;
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${userPosition.lat},${userPosition.lng}&destination=${lat},${lng}&travelmode=${travelMode}`;
+
       window.open(url, "_blank");
     }
     function goRoute(shopId, lat, lng) {
@@ -757,60 +1071,54 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
 
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
-    function openAddShopForm() {
-  document.getElementById("addShopForm").style.display = "block";
+    function openLinkForm() {
+  document.getElementById("linkForm").style.display = "block";
+  changeLanguage(); // 🔥 อัปเดตภาษาในฟอร์มทันที
 }
 
-function closeAddShopForm() {
-  document.getElementById("addShopForm").style.display = "none";
-}
-function addShop() {
-  const name = document.getElementById("shopName").value;
-  const lat = parseFloat(document.getElementById("shopLat").value);
-  const lng = parseFloat(document.getElementById("shopLng").value);
+    function closeLinkForm() {
+      document.getElementById("linkForm").style.display = "none";
+    }
+    function addShop() {
+      const name = document.getElementById("shopName").value;
+      const lat = parseFloat(document.getElementById("shopLat").value);
+      const lng = parseFloat(document.getElementById("shopLng").value);
 
-  if (!name || isNaN(lat) || isNaN(lng)) {
-    alert("กรอกข้อมูลให้ครบ");
-    return;
-  }
+      if (!name || isNaN(lat) || isNaN(lng)) {
+        alert("กรอกข้อมูลให้ครบ");
+        return;
+      }
 
-  const newShop = {
-    id: Date.now(),
-    name: { th: name, en: name, zh: name },
-    lat: lat,
-    lng: lng,
-    rating: 5,
-    price: "low",
-    priceText: { th: "💸 ไม่แพง", en: "Cheap", zh: "便宜" },
-    food: ["Vintage"],
-    location: { th: "ผู้ใช้เพิ่ม", en: "User added", zh: "用户添加" },
-    description: { th: "-", en: "-", zh: "-" },
-    images: ["https://via.placeholder.com/200"]
-  };
+      const newShop = {
+        id: Date.now(),
+        name: { th: name, en: name, zh: name },
+        lat: lat,
+        lng: lng,
+        rating: 5,
+        price: "low",
+        priceText: { th: "💸 ไม่แพง", en: "Cheap", zh: "便宜" },
+        food: ["Vintage"],
+        location: { th: "ผู้ใช้เพิ่ม", en: "User added", zh: "用户添加" },
+        description: { th: "-", en: "-", zh: "-" },
+        images: ["https://via.placeholder.com/200"]
+      };
 
-  let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
+      let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
 
-  userShops.push(newShop);
+      userShops.push(newShop);
 
-  localStorage.setItem("userShops", JSON.stringify(userShops));
+      localStorage.setItem("userShops", JSON.stringify(userShops));
 
-  closeAddShopForm();
-  loadAllShops(); // รีโหลด
-}
+      closeAddShopForm();
+      loadAllShops(); // รีโหลด
+    }
     // ===== DISPLAY LAST UPDATE DATE =====
     function updateDateDisplay() {
       const dateContainerId = "lastUpdate";
       let dateContainer = document.getElementById(dateContainerId);
 
       // สร้าง div ถ้ายังไม่มี
-      if (!dateContainer) {
-        dateContainer = document.createElement("div");
-        dateContainer.id = dateContainerId;
-        dateContainer.style.marginBottom = "10px";
-        dateContainer.style.fontSize = "14px";
-        dateContainer.style.color = "#555";
-        document.querySelector(".sidebar").insertBefore(dateContainer, document.getElementById("title").nextSibling);
-      }
+
 
       const today = new Date();
       let formattedDate = "";
@@ -835,8 +1143,8 @@ function addShop() {
   </script>
 
   <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBl6QLk4kMQ75GivgziJLdGDT09f_LSBFk&callback=initMap">
-</script>
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBl6QLk4kMQ75GivgziJLdGDT09f_LSBFk&callback=initMap">
+    </script>
   <div id="imageModal" style="
   display:none;
   position:fixed;
@@ -862,27 +1170,85 @@ function addShop() {
     border-radius:10px;
   ">
   </div>
-  <div id="addShopForm" style="
+  <div id="linkForm" style="
   display:none;
   position:fixed;
   top:50%; left:50%;
   transform:translate(-50%, -50%);
   background:white;
-  padding:15px;
-  border-radius:10px;
-  box-shadow:0 5px 20px rgba(0,0,0,0.3);
+  padding:20px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
   z-index:10000;
-  width:250px;
+  width:300px;
+  max-height:80vh;
+  overflow-y:auto;
+  font-family:sans-serif;
 ">
 
-  <h3>เพิ่มร้าน</h3>
+  <h3 id="formTitle" style="margin:0 0 15px; text-align:center;">➕ เพิ่มร้านใหม่</h3>
 
-  <input id="shopName" placeholder="ชื่อร้าน" style="width:100%; margin-bottom:5px;">
-  <input id="shopLat" placeholder="Latitude" style="width:100%; margin-bottom:5px;">
-  <input id="shopLng" placeholder="Longitude" style="width:100%; margin-bottom:5px;">
+  <!-- ลิงก์ -->
+  <label id="labelLink" style="font-size:13px; color:#555;">🔗 ลิงก์ Google Maps</label>
+  <textarea id="mapLink" placeholder="วางลิงก์ เช่น https://maps.google.com/..."
+    style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;"></textarea>
 
-  <button onclick="addShop()" style="width:100%; margin-top:5px;">💾 บันทึก</button>
-  <button onclick="closeAddShopForm()" style="width:100%; margin-top:5px;">❌ ยกเลิก</button>
+  <!-- เวลา -->
+  <label id="labelHours" style="font-size:13px; color:#555;">⏰ เวลาเปิด-ปิด</label>
+  <input type="text" id="shopHours" placeholder="เช่น 10:00-20:00"
+    style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+
+  <!-- rating -->
+  <label id="labelRating" style="font-size:13px; color:#555;">⭐ Rating</label>
+  <input type="number" id="shopRating" placeholder="0 - 5 (เช่น 4.5)"
+    style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+
+  <!-- location -->
+  <label id="labelLocation" style="font-size:13px; color:#555;">📍 ที่อยู่</label>
+  <input type="text" id="shopLocation" placeholder="เช่น หน้าม.ศิลปากร"
+    style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+
+  <!-- desc -->
+  <label id="labelDesc" style="font-size:13px; color:#555;">💬 รายละเอียด</label>
+  <input type="text" id="shopDesc" placeholder="เช่น เสื้อวินเทจ / ของญี่ปุ่น"
+    style="width:100%; padding:8px; border-radius:5px; border:1px solid #ddd; margin-bottom:10px;">
+
+  <!-- price -->
+  <label  id="labelPrice" style="font-size:13px; color:#555;">💰 ราคา</label>
+  <select id="shopPrice"
+    style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+    <option value="low">💸 ไม่แพง(100-200)</option>
+    <option value="mid">💰 กลาง(100-500)</option>
+    <option value="high">💎 ราคาหลากหลาย(100-1000)</option>
+  </select>
+
+  <!-- image -->
+  <label  id="labelImage" style="font-size:13px; color:#555;">📷 รูปภาพ</label>
+  <input type="file" id="shopImage" accept="image/*"
+    style="margin-bottom:12px;">
+
+  <!-- ปุ่ม -->
+  <div style="display:flex; gap:8px;">
+    <button id="btnSubmit" onclick="addShopFromLink()" style="
+      flex:1;
+      background:#22c55e;
+      color:white;
+      border:none;
+      padding:10px;
+      border-radius:10px;
+      cursor:pointer;
+    ">➕ เพิ่ม</button>
+
+    <button id="btnCancel" onclick="closeLinkForm()" style="
+      flex:1;
+      background:#ef4444;
+      color:white;
+      border:none;
+      padding:10px;
+      border-radius:10px;
+      cursor:pointer;
+    ">❌ ยกเลิก</button>
+  </div>
 
 </div>
 </body>
