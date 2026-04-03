@@ -159,7 +159,10 @@
       <button id="btnResetMap" onclick="resetMap()" style="width:100%; padding:6px;">🔄 รีเซ็ตแผนที่</button>
 <button id="btnLocateUser" onclick="locateUser()" style="width:100%; padding:6px; margin-top:5px;">📍 ตำแหน่งของฉัน</button>
 <button id="btnSurvey" onclick="window.open('https://forms.gle/tyC2Jc1Na3iUEhqs6', '_blank')" style="width:100%; padding:6px; margin-top:5px;">📝 กรอกแบบสอบถาม</button>
-    </div>
+<button onclick="openAddShopForm()" style="width:100%; padding:6px; margin-top:5px;">
+➕ เพิ่มร้าน
+</button>
+</div>
 
     <div id="shopList"></div>
   </div>
@@ -350,31 +353,21 @@
       }
     });
 
-    function loadShopsData() {
-      fetch("shops.json")
-        .then(response => {
-          if (!response.ok) {
-            throw new Error("โหลดไฟล์ shops.json ไม่สำเร็จ");
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log("✅ DATA:", data);
+    function loadAllShops() {
+  fetch("shops.json")
+    .then(response => response.json())
+    .then(data => {
+      let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
 
-          // กันข้อมูลพัง
-          if (!Array.isArray(data)) {
-            throw new Error("รูปแบบข้อมูลไม่ถูกต้อง (ต้องเป็น array)");
-          }
+      foodShopsData = [...data, ...userShops];
 
-          foodShopsData = data;
-          applyFilters();
-        })
-        .catch(error => {
-          console.error("❌ โหลด JSON ไม่ได้:", error);
-
-          alert("โหลดข้อมูลร้านไม่สำเร็จ\nลองเปิดผ่าน Live Server หรือ localhost");
-        });
-    }
+      applyFilters();
+    })
+    .catch(err => {
+      console.error(err);
+      alert("โหลดร้านไม่สำเร็จ");
+    });
+}
     function toggleFavorite(id) {
       if (favorites.includes(id)) {
         favorites = favorites.filter(f => f !== id);
@@ -465,7 +458,7 @@ document.getElementById("btnSurvey").innerText = buttonTranslations.survey[curre
       });
       updateDateDisplay();
 
-      loadShopsData();
+      loadAllShops();
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
       directionsRenderer.setMap(map);
@@ -764,6 +757,46 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
 
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
+    function openAddShopForm() {
+  document.getElementById("addShopForm").style.display = "block";
+}
+
+function closeAddShopForm() {
+  document.getElementById("addShopForm").style.display = "none";
+}
+function addShop() {
+  const name = document.getElementById("shopName").value;
+  const lat = parseFloat(document.getElementById("shopLat").value);
+  const lng = parseFloat(document.getElementById("shopLng").value);
+
+  if (!name || isNaN(lat) || isNaN(lng)) {
+    alert("กรอกข้อมูลให้ครบ");
+    return;
+  }
+
+  const newShop = {
+    id: Date.now(),
+    name: { th: name, en: name, zh: name },
+    lat: lat,
+    lng: lng,
+    rating: 5,
+    price: "low",
+    priceText: { th: "💸 ไม่แพง", en: "Cheap", zh: "便宜" },
+    food: ["Vintage"],
+    location: { th: "ผู้ใช้เพิ่ม", en: "User added", zh: "用户添加" },
+    description: { th: "-", en: "-", zh: "-" },
+    images: ["https://via.placeholder.com/200"]
+  };
+
+  let userShops = JSON.parse(localStorage.getItem("userShops")) || [];
+
+  userShops.push(newShop);
+
+  localStorage.setItem("userShops", JSON.stringify(userShops));
+
+  closeAddShopForm();
+  loadAllShops(); // รีโหลด
+}
     // ===== DISPLAY LAST UPDATE DATE =====
     function updateDateDisplay() {
       const dateContainerId = "lastUpdate";
@@ -802,8 +835,8 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
   </script>
 
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA3EDtT1ilnNh2q9owuiTIDRqvy_MDh-B0&callback=initMap">
-    </script>
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBl6QLk4kMQ75GivgziJLdGDT09f_LSBFk&callback=initMap">
+</script>
   <div id="imageModal" style="
   display:none;
   position:fixed;
@@ -829,6 +862,29 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
     border-radius:10px;
   ">
   </div>
+  <div id="addShopForm" style="
+  display:none;
+  position:fixed;
+  top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  background:white;
+  padding:15px;
+  border-radius:10px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.3);
+  z-index:10000;
+  width:250px;
+">
+
+  <h3>เพิ่มร้าน</h3>
+
+  <input id="shopName" placeholder="ชื่อร้าน" style="width:100%; margin-bottom:5px;">
+  <input id="shopLat" placeholder="Latitude" style="width:100%; margin-bottom:5px;">
+  <input id="shopLng" placeholder="Longitude" style="width:100%; margin-bottom:5px;">
+
+  <button onclick="addShop()" style="width:100%; margin-top:5px;">💾 บันทึก</button>
+  <button onclick="closeAddShopForm()" style="width:100%; margin-top:5px;">❌ ยกเลิก</button>
+
+</div>
 </body>
 
 </html>
