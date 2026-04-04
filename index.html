@@ -62,7 +62,7 @@
       position: fixed;
       top: 50%;
       /* ตรงกลางแนวตั้ง */
-      left: 337px;
+      left: 320px;
       /* ตอน sidebar เปิด */
       transform: translateY(-50%);
       z-index: 10001;
@@ -146,8 +146,10 @@
     }
 
     #map {
-      flex: 1;
-    }
+  flex: 1;
+  height: 100vh;
+  z-index: 1;
+}
 
     .controls input,
     .controls select {
@@ -222,6 +224,13 @@
     </div>
 
     <div id="shopList"></div>
+    <label style="font-size:13px; color:#555;">🧢 หมวดหมู่</label>
+<select id="shopCategory"
+  style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+  <option value="Vintage">Vintage</option>
+  <option value="Streetwear">Streetwear</option>
+  <option value="ญี่ปุ่น">ญี่ปุ่น</option>
+</select>
   </div>
 
   <div id="map"></div>
@@ -420,7 +429,7 @@
           btn.style.left = "0";
           btn.innerText = ">";
         } else {
-          btn.style.left = "350px";
+          btn.style.left = sidebar.offsetWidth + "px";
           btn.innerText = "<";
         }
       }
@@ -695,7 +704,8 @@ document.getElementById("shopDesc").placeholder = formTranslations.placeholderDe
 
       const filtered = foodShopsData.filter(shop => {
         const matchName = shop.name[currentLang].toLowerCase().includes(keyword);
-        const matchCategory = category === "all" || shop.category === category;
+        const matchCategory = category === "all" || 
+  (shop.food && shop.food.includes(category));
         const matchPrice = price === "all" || shop.price === price;
 
         const matchFavorite = !showOnlyFavorites || favorites.includes(shop.id);
@@ -953,7 +963,7 @@ ${currentLang === 'th' ? 'ดูเส้นทาง' : currentLang === 'zh' ? 
     function addShopFromLink() {
   const url = document.getElementById("mapLink").value;
   const data = extractDataFromGoogleMaps(url);
-
+  const category = document.getElementById("shopCategory").value;
   if (!data) {
     alert("ลิงก์ไม่ถูกต้อง");
     return;
@@ -987,6 +997,7 @@ const desc = document.getElementById("shopDesc").value || translations.unknown[c
     const newShop = {
       id: Date.now(),
       isUserAdded: true,
+      category: category,
       name: {
         th: data.name,
         en: data.name,
