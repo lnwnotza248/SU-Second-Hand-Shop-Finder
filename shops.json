@@ -1,0 +1,366 @@
+[
+  {
+    "id": 0,
+    "name": {
+      "th": "Perch Club Thrift Store",
+      "zh": "Perch 俱乐部二手店",
+      "en": "Perch Club Thrift Store"
+    },
+    "lat": 13.8123,
+    "lng": 100.0413,
+    "food": [
+      "Vintage",
+      "Streetwear",
+      "ญี่ปุ่น"
+    ],
+    "price": "high",
+    "images": [
+      "shop-images/perch-club-thrift-store-2.png",
+      "shop-images/perch-club-thrift-store-3.png",
+      "shop-images/perch-club-thrift-store.png"
+    ],
+    "priceText": {
+      "th": "💎 หลากหลาย (100-800 บาท)",
+      "zh": "💎 各种价格 (100-800 泰铢)",
+      "en": "💎 Various (100-800 THB)"
+    },
+    "location": {
+      "th": "ซอยชยาทิพย์แมนชั่น ตรงข้าม ม.ศิลปากร",
+      "zh": "Chayatip Mansion 对面 Silpakorn 大学",
+      "en": "Chayatip Mansion Alley"
+    },
+    "description": {
+      "th": "ร้านยอดนิยม มีทั้งของถูกและของ rare",
+      "zh": "热门店，有便宜和稀有物品",
+      "en": "Popular store with cheap and rare items"
+    },
+    "link": "https://maps.app.goo.gl/T417WYqDWEVVW5WK7",
+    "rating": 4.8
+  },
+  {
+    "id": 1,
+    "name": {
+      "th": "ฉยล Vintage",
+      "zh": "Chayan Vintage 店",
+      "en": "Chayan Vintage"
+    },
+    "lat": 13.8241,
+    "lng": 100.0407,
+    "food": [
+      "Vintage",
+      "Streetwear"
+    ],
+    "price": "mid",
+    "images": [
+      "shop-images/chayan-vintage-2.png",
+      "shop-images/chayan-vintage-3.png",
+      "shop-images/chayan-vintage.png"
+    ],
+    "priceText": {
+      "th": "💰 กลาง (150-400 บาท)",
+      "zh": "💰 中等 (150-400 泰铢)",
+      "en": "💰 Medium (150-400 THB)"
+    },
+    "location": {
+      "th": "หลังมอศิลปากร ข้ามทางรถไฟ",
+      "zh": "Silpakorn 大学后面",
+      "en": "Behind Silpakorn University"
+    },
+    "description": {
+      "th": "ร้านลับบรรยากาศดี เน้นยุค 90",
+      "zh": "隐藏小店，主打90年代",
+      "en": "Hidden shop focusing on 90s style"
+    },
+    "link": "https://maps.app.goo.gl/U1jL8bAGBaSbXTwz8",
+    "rating": 4.5
+  },
+  {
+    "id": 2,
+    "name": {
+      "th": "Silpakorn Thrift Market",
+      "zh": "Silpakorn 二手市场",
+      "en": "Silpakorn Thrift Market"
+    },
+    "lat": 13.8183,
+    "lng": 100.0409,
+    "food": [
+      "Vintage"
+    ],
+    "price": "low",
+    "images": [
+      "shop-images/silpakorn-thrift-market-2.png",
+      "shop-images/silpakorn-thrift-market.png"
+    ],
+    "priceText": {
+      "th": "💸 ไม่แพง (50-150 บาท)",
+      "zh": "💸 不贵 (50-150 泰铢)",
+      "en": "💸 Cheap (50-150 THB)"
+    },
+    "location": {
+      "th": "ตลาดในมหาวิทยาลัยศิลปากร",
+      "zh": "大学内市场",
+      "en": "Inside Silpakorn University"
+    },
+    "description": {
+      "th": "ตลาดนักศึกษา ราคาถูกมาก",
+      "zh": "学生市场，非常便宜",
+      "en": "Very cheap student market"
+    },
+    "link": "https://maps.app.goo.gl/zXFsw33LAML9YVVG7",
+    "rating": 4.2
+  },
+  {
+    "id": 3,
+    "name": {
+      "th": "โกดังวินเทจ สาขา1",
+      "zh": "复古仓库 分店1",
+      "en": "Vintage Warehouse Branch 1"
+    },
+    "lat": 13.8236,
+    "lng": 100.05,
+    "food": [
+      "Vintage"
+    ],
+    "price": "high",
+    "images": [
+      "shop-images/vintage-warehouse-branch-1-2.png",
+      "shop-images/vintage-warehouse-branch-1.png"
+    ],
+    "priceText": {
+      "th": "💎 หลากหลาย (100-1000 บาท)",
+      "zh": "💎 各种价格 (100-1000 泰铢)",
+      "en": "💎 Various (100-1000 THB)"
+    },
+    "location": {
+      "th": "ถนนหน้าพระราชวังสนามจันทร์",
+      "zh": "皇宫前街",
+      "en": "Near Sanamchan Palace"
+    },
+    "description": {
+      "th": "โกดังใหญ่ ของเยอะมาก",
+      "zh": "大仓库，商品丰富",
+      "en": "Large warehouse with many items"
+    },
+    "link": "https://maps.app.goo.gl/RRBkANx79KSU276h7",
+    "rating": 4.6
+  },
+  {
+    "id": 4,
+    "name": {
+      "th": "ร้านเสื้อยืดมือสอง ถนนคนเดิน",
+      "zh": "步行街二手T恤店",
+      "en": "Second-hand T-Shirt Street Shop"
+    },
+    "lat": 13.8238,
+    "lng": 100.0513,
+    "food": [
+      "Vintage",
+      "ญี่ปุ่น"
+    ],
+    "price": "low",
+    "images": [
+      "shop-images/second-hand-t-shirt-street-shop-2.png",
+      "shop-images/second-hand-t-shirt-street-shop-3.png",
+      "shop-images/second-hand-t-shirt-street-shop.png"
+    ],
+    "priceText": {
+      "th": "💸 ไม่แพง (80-200 บาท)",
+      "zh": "💸 不贵 (80-200 泰铢)",
+      "en": "💸 Cheap (80-200 THB)"
+    },
+    "location": {
+      "th": "ถนนคนเดินนครปฐม",
+      "zh": "步行街",
+      "en": "Walking Street"
+    },
+    "description": {
+      "th": "เสื้อยืดราคานักศึกษา",
+      "zh": "学生价T恤",
+      "en": "Student-priced T-shirts"
+    },
+    "link": "https://maps.app.goo.gl/AvRMiuW1GdNLKuFE7",
+    "rating": 4.3
+  },
+  {
+    "id": 5,
+    "name": {
+      "th": "Brown Lady",
+      "zh": "布朗女士店",
+      "en": "Brown Lady"
+    },
+    "lat": 13.8151,
+    "lng": 100.0455,
+    "food": [
+      "Vintage"
+    ],
+    "price": "low",
+    "images": [
+      "shop-images/brown-lady-2.png",
+      "shop-images/brown-lady-3.png",
+      "shop-images/brown-lady.png"
+    ],
+    "priceText": {
+      "th": "💸 ไม่แพง (50-150 บาท)",
+      "zh": "💸 不贵",
+      "en": "💸 Cheap"
+    },
+    "location": {
+      "th": "หน้ามหาวิทยาลัยศิลปากร",
+      "zh": "大学前",
+      "en": "In front of university"
+    },
+    "description": {
+      "th": "ร้านยอดนิยม ราคาถูก",
+      "zh": "热门便宜店",
+      "en": "Popular cheap store"
+    },
+    "link": "https://maps.app.goo.gl/dURT7GQFijq4xUef9",
+    "rating": 4.4
+  },
+  {
+    "id": 6,
+    "name": {
+      "th": "Happy Tee",
+      "zh": "Happy Tee 店",
+      "en": "Happy Tee"
+    },
+    "lat": 13.8145,
+    "lng": 100.0463,
+    "food": [
+      "Vintage",
+      "Streetwear"
+    ],
+    "price": "mid",
+    "images": [
+      "shop-images/happy-tee-2.png",
+      "shop-images/happy-tee.png"
+    ],
+    "priceText": {
+      "th": "💰 กลาง (100-300 บาท)",
+      "zh": "💰 中等",
+      "en": "💰 Medium"
+    },
+    "location": {
+      "th": "ถนนราชมรรคาใน",
+      "zh": "街道内",
+      "en": "Inner road"
+    },
+    "description": {
+      "th": "เสื้อวง เสื้อสตรีท",
+      "zh": "乐队T恤",
+      "en": "Band tees & streetwear"
+    },
+    "link": "https://maps.app.goo.gl/NSwDHXoPkMam76FX7",
+    "rating": 4.1
+  },
+  {
+    "id": 7,
+    "name": {
+      "th": "Big-E มือสอง",
+      "zh": "Big-E 二手店",
+      "en": "Big-E Second-hand"
+    },
+    "lat": 13.8167,
+    "lng": 100.0545,
+    "food": [
+      "Vintage",
+      "Streetwear"
+    ],
+    "price": "high",
+    "images": [
+      "shop-images/big-e-second-hand-2.png",
+      "shop-images/big-e-second-hand-3.png",
+      "shop-images/big-e-second-hand.png"
+    ],
+    "priceText": {
+      "th": "💎 หลากหลาย (100-700 บาท)",
+      "zh": "💎 各种价格",
+      "en": "💎 Various"
+    },
+    "location": {
+      "th": "ถนนหน้าพระปฐมเจดีย์",
+      "zh": "佛塔前",
+      "en": "Near Phra Pathom Chedi"
+    },
+    "description": {
+      "th": "ร้านใหญ่ ตัวเลือกเยอะ",
+      "zh": "大店选择多",
+      "en": "Large store with many options"
+    },
+    "link": "https://maps.app.goo.gl/sqe73b3nuTK8NdMY6",
+    "rating": 4.7
+  },
+  {
+    "id": 8,
+    "name": {
+      "th": "Vtassei (ญี่ปุ่น)",
+      "zh": "Vtassei (日本)",
+      "en": "Vtassei (Japan)"
+    },
+    "lat": 13.8147,
+    "lng": 100.0418,
+    "food": [
+      "ญี่ปุ่น",
+      "Vintage"
+    ],
+    "price": "mid",
+    "images": [
+      "shop-images/vtassei-japan-2.png",
+      "shop-images/vtassei-japan-3.png",
+      "shop-images/vtassei-japan.png"
+    ],
+    "priceText": {
+      "th": "💰 กลาง (200-500 บาท)",
+      "zh": "💰 中等",
+      "en": "💰 Medium"
+    },
+    "location": {
+      "th": "หน้ามหาวิทยาลัย",
+      "zh": "大学前",
+      "en": "Front of university"
+    },
+    "description": {
+      "th": "เน้นแบรนด์ญี่ปุ่น",
+      "zh": "日本品牌",
+      "en": "Japanese brands focus"
+    },
+    "link": "https://maps.app.goo.gl/65vf4f2Xqh9Ha4rGA",
+    "rating": 4.6
+  },
+  {
+    "id": 9,
+    "name": {
+      "th": "โรงเกลือมาร์เก็ต",
+      "zh": "Rong Kluea 市场",
+      "en": "Rong Kluea Market"
+    },
+    "lat": 13.8109,
+    "lng": 100.036,
+    "food": [
+      "Vintage"
+    ],
+    "price": "low",
+    "images": [
+      "shop-images/rong-kluea-market-2.png",
+      "shop-images/rong-kluea-market-3.png",
+      "shop-images/rong-kluea-market.png"
+    ],
+    "priceText": {
+      "th": "💸 ไม่แพง (50-150 บาท)",
+      "zh": "💸 不贵",
+      "en": "💸 Cheap"
+    },
+    "location": {
+      "th": "หลังมหาวิทยาลัย",
+      "zh": "大学后面",
+      "en": "Behind university"
+    },
+    "description": {
+      "th": "ตลาดมือสองขนาดเล็ก",
+      "zh": "小型市场",
+      "en": "Small second-hand market"
+    },
+    "link": "https://maps.app.goo.gl/TudWLhms4X6sHzybA",
+    "rating": 4.0
+  }
+]

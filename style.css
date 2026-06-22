@@ -1,0 +1,385 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Sarabun', sans-serif;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #f4f6fb;
+}
+
+#map {
+  flex: 1;
+  height: 100vh;
+  z-index: 1;
+}
+
+.sidebar {
+  width: 340px;
+  background: #ffffff;
+  padding: 22px;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+  transition: transform 0.3s ease;
+  border-left: 1px solid #e5e7eb;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1000;
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+#shopList {
+  margin-top: 12px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+#title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+#shopCount {
+  font-size: 13px;
+  background: #111;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.last-update {
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.controls {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.controls-header {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #111827;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.split-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.controls select,
+.controls input,
+.form-control {
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background: #f9fafb;
+}
+
+.controls select:focus,
+.controls input:focus,
+.form-control:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.controls button,
+.primary-button,
+.danger-button {
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.controls button {
+  background: #111827;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.controls button:hover,
+.primary-button:hover,
+.danger-button:hover {
+  transform: translateY(-1px);
+}
+
+.button-group {
+  display: grid;
+  gap: 10px;
+}
+
+.primary-button {
+  background: #22c55e;
+  color: #fff;
+}
+
+.danger-button {
+  background: #ef4444;
+  color: #fff;
+}
+
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.shop-card {
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 18px;
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
+  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  position: relative;
+}
+
+.shop-card:hover {
+  background: #f8fafc;
+  transform: translateY(-4px);
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.shop-card img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 16px;
+  margin-bottom: 12px;
+}
+
+.shop-open {
+  border: 2px solid #22c55e;
+  background: #f0fdf4;
+}
+
+#toggleSidebar {
+  position: fixed;
+  top: 50%;
+  left: 340px;
+  transform: translateY(-50%);
+  z-index: 1005;
+  background: #111;
+  color: white;
+  border: none;
+  padding: 15px 8px;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: left 0.3s ease;
+  font-size: 18px;
+}
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-overlay.modal-hidden {
+  display: none;
+}
+
+.modal-overlay:not(.modal-hidden) {
+  display: flex;
+}
+
+.modal-inner {
+  position: relative;
+  width: 90%;
+  max-width: 900px;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 10px;
+}
+
+.modal-close {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 40px;
+  color: white;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.image-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.preview-image {
+  width: 200px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.info-window {
+  font-family: 'Sarabun', sans-serif;
+  max-width: 320px;
+}
+
+.info-button,
+.info-window button {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  background: #111;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.route-buttons {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.route-buttons button {
+  flex: 1;
+}
+
+.info-note {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  margin-top: 5px;
+}
+
+.delete-pin {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+}
+
+.delete-button,
+.favorite-toggle {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.delete-button:hover,
+.favorite-toggle:hover {
+  transform: scale(1.2);
+}
+
+.modal-content label {
+  font-size: 13px;
+  color: #555;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+}
+
+.small-label {
+  font-size: 13px;
+  color: #555;
+}
+
+.full-width-select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  body {
+    flex-direction: column-reverse;
+  }
+
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    left: 0;
+    width: 100%;
+    height: 45vh;
+    max-height: 45vh;
+    transform: translateY(0);
+    z-index: 1000;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    padding: 10px 16px 120px;
+  }
+
+  .sidebar.hidden {
+    transform: translateY(calc(100% + 16px));
+    width: 100%;
+  }
+
+  #map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #toggleSidebar {
+    bottom: 24px;
+    left: 50%;
+    top: auto;
+    transform: translateX(-50%);
+    border-radius: 20px;
+    padding: 10px 24px;
+    font-size: 14px;
+    transition: bottom 0.3s ease;
+    z-index: 10002;
+  }
+}

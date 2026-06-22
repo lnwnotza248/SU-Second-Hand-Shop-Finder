@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แผนที่ร้านเสื้อผ้ามือสองรอบมหาวิทยาลัยศิลปากร</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <button id="toggleSidebar" type="button">&gt;</button>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2 id="title">ร้านทั้งหมด</h2>
+      <span id="shopCount"></span>
+    </div>
+
+    <div id="lastUpdate" class="last-update"></div>
+
+    <div class="controls">
+      <div class="controls-header" id="controlsHeader">ตัวกรอง</div>
+
+      <select id="language">
+        <option value="th">ไทย</option>
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+      </select>
+
+      <input type="text" id="search" placeholder="ค้นหาร้าน...">
+
+      <div class="split-row">
+        <select id="category">
+          <option value="all">ทุกหมวด</option>
+          <option value="Vintage">Vintage</option>
+          <option value="Streetwear">Streetwear</option>
+          <option value="ญี่ปุ่น">ญี่ปุ่น</option>
+        </select>
+        <select id="price">
+          <option value="all">ทุกช่วงราคา</option>
+          <option value="low">💸 ไม่แพง</option>
+          <option value="mid">💰 กลาง</option>
+          <option value="high">💎 หลากหลาย</option>
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button id="btnResetMap" type="button">🔄 รีเซ็ตแผนที่</button>
+        <button id="btnFavoriteFilter" type="button">❤️ ร้านที่ชอบ</button>
+        <button id="btnLocateUser" type="button">📍 ตำแหน่งของฉัน</button>
+      </div>
+      <div class="button-group">
+        <button id="btnSurvey" type="button">📝 กรอกแบบสอบถาม</button>
+        <button id="btnAddShop" type="button">➕ เพิ่มร้านจากลิงก์</button>
+      </div>
+    </div>
+
+    <div id="shopList"></div>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="imageModal" class="modal-overlay modal-hidden">
+    <div class="modal-inner">
+      <span id="modalClose" class="modal-close">×</span>
+      <img id="modalImg" class="modal-image" alt="Shop image">
+    </div>
+  </div>
+
+  <div id="linkForm" class="modal-overlay modal-hidden">
+    <div class="modal-content">
+      <h3 id="formTitle">➕ เพิ่มร้านใหม่</h3>
+
+      <label id="labelLink">🔗 ลิงก์ Google Maps</label>
+      <textarea id="mapLink" class="form-control" placeholder="วางลิงก์ เช่น https://maps.google.com/..."></textarea>
+
+      <label id="labelHours">⏰ เวลาเปิด-ปิด</label>
+      <input id="shopHours" class="form-control" placeholder="เช่น 10:00-20:00">
+
+      <label id="labelRating">⭐ Rating</label>
+      <input id="shopRating" class="form-control" type="number" min="0" max="5" step="0.1" placeholder="0 - 5 (เช่น 4.5)">
+
+      <label id="labelLocation">📍 ที่อยู่</label>
+      <input id="shopLocation" class="form-control" placeholder="เช่น หน้าม.ศิลปากร">
+
+      <label id="labelDesc">💬 รายละเอียด</label>
+      <input id="shopDesc" class="form-control" placeholder="เช่น เสื้อวินเทจ / ของญี่ปุ่น">
+
+      <label id="labelPrice">💰 ราคา</label>
+      <select id="shopPrice" class="form-control">
+        <option value="low">💸 ไม่แพง(100-200)</option>
+        <option value="mid">💰 กลาง(100-500)</option>
+        <option value="high">💎 ราคาหลากหลาย(100-1000)</option>
+      </select>
+
+      <label id="labelCategory">🧢 หมวดหมู่</label>
+      <select id="shopCategory" class="form-control">
+        <option value="Vintage">Vintage</option>
+        <option value="Streetwear">Streetwear</option>
+        <option value="ญี่ปุ่น">ญี่ปุ่น</option>
+      </select>
+
+      <label id="labelImage">📷 รูปภาพ</label>
+      <input id="shopImage" class="form-control" type="file" accept="image/*">
+
+      <div class="button-row">
+        <button id="btnSubmit" type="button" class="primary-button">➕ เพิ่ม</button>
+        <button id="btnCancel" type="button" class="danger-button">❌ ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBl6QLk4kMQ75GivgziJLdGDT09f_LSBFk&callback=initMap">
+  </script>
+</body>
+
+</html>
